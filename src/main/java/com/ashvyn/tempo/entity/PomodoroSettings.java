@@ -13,7 +13,7 @@ import java.util.UUID;
 public class PomodoroSettings {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
     @OneToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(
