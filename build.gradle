@@ -32,6 +32,8 @@ dependencies {
 	//implementation 'dev.langchain4j:langchain4j-open-ai-spring-boot-starter:1.0.0-beta1'
 	implementation 'dev.langchain4j:langchain4j-google-ai-gemini-spring-boot-starter:1.0.0-beta1'
 	implementation 'dev.langchain4j:langchain4j-spring-boot-starter:1.0.0-beta1'
+
+	runtimeOnly 'org.postgresql:postgresql'
 }
 
 tasks.named('test') {
