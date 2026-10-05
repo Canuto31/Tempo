@@ -118,6 +118,17 @@ Con la aplicación iniciada:
 
 Swagger UI permite consultar esquemas, parámetros y respuestas, además de ejecutar solicitudes directamente desde el navegador.
 
+## Colección de Postman
+
+El directorio `postman/` contiene archivos importables para probar la API sin frontend:
+
+- `Tempo API.postman_collection.json`: colección con todos los endpoints del Sprint 1, OpenAPI y Swagger UI.
+- `Tempo API.postman_environment.json`: entorno local con `baseUrl` y variables para los IDs.
+
+En Postman, importa ambos archivos y selecciona el environment **Tempo Local**. Inicia la aplicación y ejecuta las carpetas en el orden mostrado. Cada request `Create` guarda automáticamente el ID de su respuesta para que las operaciones `Get`, `Update` y las relaciones posteriores lo reutilicen.
+
+La carpeta **Delete operations** se ejecuta manualmente al final. Tasks, Projects, Categories y Labels usan soft delete. La eliminación de un estado o usuario puede devolver `409 Conflict` si conserva relaciones con registros eliminados lógicamente; este comportamiento protege la integridad referencial existente.
+
 ## Endpoints del Sprint 1
 
 La ruta declarada por los controllers comienza en `/api/v1`. Como el proyecto usa el context path `/tempo/api`, una llamada HTTP completa tiene la forma:
