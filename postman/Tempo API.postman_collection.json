@@ -11,8 +11,8 @@
       "script": {
         "type": "text/javascript",
         "exec": [
-          "if (!pm.environment.get('runId')) {",
-          "  pm.environment.set('runId', Date.now().toString());",
+          "if (!pm.collectionVariables.get('runId')) {",
+          "  pm.collectionVariables.set('runId', Date.now().toString());",
           "}"
         ]
       }
@@ -36,7 +36,7 @@
       "item": [
         {
           "name": "Create user",
-          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('User created', () => pm.response.to.have.status(201));", "pm.environment.set('userId', pm.response.json().id);"] } }],
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('User created', () => pm.response.to.have.status(201));", "if (pm.response.code === 201) pm.collectionVariables.set('userId', pm.response.json().id);"] } }],
           "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"name\": \"Postman User\",\n  \"username\": \"postman_{{runId}}\",\n  \"email\": \"postman_{{runId}}@tempo.local\",\n  \"password\": \"tempo-demo\",\n  \"authProvider\": \"LOCAL\",\n  \"profileImage\": null\n}" }, "url": "{{baseUrl}}/api/v1/users", "description": "Creates a local demo user and stores the returned id." }
         },
         { "name": "List users", "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/users", "description": "Returns all user profiles without passwords." } },
@@ -47,7 +47,7 @@
     {
       "name": "Task Statuses",
       "item": [
-        { "name": "Create task status", "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Status created', () => pm.response.to.have.status(201));", "pm.environment.set('statusId', pm.response.json().id);"] } }], "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"ownerId\": \"{{userId}}\",\n  \"name\": \"Postman status\",\n  \"position\": 10,\n  \"defaultStatus\": false\n}" }, "url": "{{baseUrl}}/api/v1/task-statuses", "description": "Creates a custom status owned by the created user." } },
+        { "name": "Create task status", "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Status created', () => pm.response.to.have.status(201));", "if (pm.response.code === 201) pm.collectionVariables.set('statusId', pm.response.json().id);"] } }], "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"ownerId\": \"{{userId}}\",\n  \"name\": \"Postman status\",\n  \"position\": 10,\n  \"defaultStatus\": false\n}" }, "url": "{{baseUrl}}/api/v1/task-statuses", "description": "Creates a custom status owned by the created user." } },
         { "name": "List task statuses", "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/task-statuses", "description": "Lists statuses ordered by position. Add global=true or ownerId as query parameters to filter." } },
         { "name": "Get task status", "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/task-statuses/{{statusId}}" } },
         { "name": "Update task status", "request": { "method": "PUT", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"name\": \"Postman status updated\",\n  \"position\": 11,\n  \"defaultStatus\": false\n}" }, "url": "{{baseUrl}}/api/v1/task-statuses/{{statusId}}" } }
@@ -56,7 +56,7 @@
     {
       "name": "Categories",
       "item": [
-        { "name": "Create category", "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Category created', () => pm.response.to.have.status(201));", "pm.environment.set('categoryId', pm.response.json().id);"] } }], "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"ownerId\": \"{{userId}}\",\n  \"name\": \"Postman category\"\n}" }, "url": "{{baseUrl}}/api/v1/categories" } },
+        { "name": "Create category", "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Category created', () => pm.response.to.have.status(201));", "if (pm.response.code === 201) pm.collectionVariables.set('categoryId', pm.response.json().id);"] } }], "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"ownerId\": \"{{userId}}\",\n  \"name\": \"Postman category\"\n}" }, "url": "{{baseUrl}}/api/v1/categories" } },
         { "name": "List categories", "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/categories", "description": "Lists active categories. Add global=true or ownerId to filter." } },
         { "name": "Get category", "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/categories/{{categoryId}}" } },
         { "name": "Update category", "request": { "method": "PUT", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"name\": \"Postman category updated\"\n}" }, "url": "{{baseUrl}}/api/v1/categories/{{categoryId}}" } }
@@ -65,7 +65,7 @@
     {
       "name": "Labels",
       "item": [
-        { "name": "Create label", "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Label created', () => pm.response.to.have.status(201));", "pm.environment.set('labelId', pm.response.json().id);"] } }], "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"ownerId\": \"{{userId}}\",\n  \"name\": \"Postman label\"\n}" }, "url": "{{baseUrl}}/api/v1/labels" } },
+        { "name": "Create label", "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Label created', () => pm.response.to.have.status(201));", "if (pm.response.code === 201) pm.collectionVariables.set('labelId', pm.response.json().id);"] } }], "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"ownerId\": \"{{userId}}\",\n  \"name\": \"Postman label\"\n}" }, "url": "{{baseUrl}}/api/v1/labels" } },
         { "name": "List labels", "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/labels", "description": "Lists active labels. Add global=true or ownerId to filter." } },
         { "name": "Get label", "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/labels/{{labelId}}" } },
         { "name": "Update label", "request": { "method": "PUT", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"name\": \"Postman label updated\"\n}" }, "url": "{{baseUrl}}/api/v1/labels/{{labelId}}" } }
@@ -74,7 +74,7 @@
     {
       "name": "Projects",
       "item": [
-        { "name": "Create project", "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Project created', () => pm.response.to.have.status(201));", "pm.environment.set('projectId', pm.response.json().id);"] } }], "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"ownerId\": \"{{userId}}\",\n  \"parentProjectId\": null,\n  \"name\": \"Postman Project\",\n  \"description\": \"Project created from the Tempo Postman collection.\",\n  \"deadline\": \"2026-12-31\"\n}" }, "url": "{{baseUrl}}/api/v1/projects" } },
+        { "name": "Create project", "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Project created', () => pm.response.to.have.status(201));", "if (pm.response.code === 201) pm.collectionVariables.set('projectId', pm.response.json().id);"] } }], "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"ownerId\": \"{{userId}}\",\n  \"parentProjectId\": null,\n  \"name\": \"Postman Project\",\n  \"description\": \"Project created from the Tempo Postman collection.\",\n  \"deadline\": \"2026-12-31\"\n}" }, "url": "{{baseUrl}}/api/v1/projects" } },
         { "name": "List projects", "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/projects", "description": "Lists active projects. Add ownerId to filter." } },
         { "name": "Get project", "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/projects/{{projectId}}" } },
         { "name": "Update project", "request": { "method": "PUT", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"parentProjectId\": null,\n  \"name\": \"Postman Project Updated\",\n  \"description\": \"Updated from Postman.\",\n  \"deadline\": \"2026-12-31\"\n}" }, "url": "{{baseUrl}}/api/v1/projects/{{projectId}}" } }
@@ -83,7 +83,7 @@
     {
       "name": "Tasks",
       "item": [
-        { "name": "Create project task", "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Task created', () => pm.response.to.have.status(201));", "pm.environment.set('taskId', pm.response.json().id);"] } }], "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"title\": \"Validate Tempo from Postman\",\n  \"description\": \"Exercise the complete Sprint 1 API.\",\n  \"notes\": \"Created by the shared collection.\",\n  \"personalOwnerId\": null,\n  \"projectId\": \"{{projectId}}\",\n  \"responsibleUserId\": \"{{userId}}\",\n  \"parentTaskId\": null,\n  \"categoryId\": \"{{categoryId}}\",\n  \"statusId\": \"{{statusId}}\",\n  \"deadline\": \"2026-12-31\",\n  \"estimatedTimeSeconds\": 3600,\n  \"pokerPoints\": 3\n}" }, "url": "{{baseUrl}}/api/v1/tasks" } },
+        { "name": "Create project task", "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Task created', () => pm.response.to.have.status(201));", "if (pm.response.code === 201) pm.collectionVariables.set('taskId', pm.response.json().id);"] } }], "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"title\": \"Validate Tempo from Postman\",\n  \"description\": \"Exercise the complete Sprint 1 API.\",\n  \"notes\": \"Created by the shared collection.\",\n  \"personalOwnerId\": null,\n  \"projectId\": \"{{projectId}}\",\n  \"responsibleUserId\": \"{{userId}}\",\n  \"parentTaskId\": null,\n  \"categoryId\": \"{{categoryId}}\",\n  \"statusId\": \"{{statusId}}\",\n  \"deadline\": \"2026-12-31\",\n  \"estimatedTimeSeconds\": 3600,\n  \"pokerPoints\": 3\n}" }, "url": "{{baseUrl}}/api/v1/tasks" } },
         { "name": "List tasks", "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/tasks", "description": "Lists active tasks. Supports one of personalOwnerId, projectId, responsibleUserId or parentTaskId." } },
         { "name": "List tasks by project", "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/tasks?projectId={{projectId}}" } },
         { "name": "Get task", "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/tasks/{{taskId}}" } },
@@ -111,6 +111,13 @@
     }
   ],
   "variable": [
-    { "key": "baseUrl", "value": "http://localhost:8080/tempo/api", "type": "string" }
+    { "key": "baseUrl", "value": "http://localhost:8080/tempo/api", "type": "string" },
+    { "key": "runId", "value": "", "type": "string" },
+    { "key": "userId", "value": "", "type": "string" },
+    { "key": "statusId", "value": "", "type": "string" },
+    { "key": "categoryId", "value": "", "type": "string" },
+    { "key": "labelId", "value": "", "type": "string" },
+    { "key": "projectId", "value": "", "type": "string" },
+    { "key": "taskId", "value": "", "type": "string" }
   ]
 }

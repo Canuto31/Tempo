@@ -125,7 +125,7 @@ El directorio `postman/` contiene archivos importables para probar la API sin fr
 - `Tempo API.postman_collection.json`: colección con todos los endpoints del Sprint 1, OpenAPI y Swagger UI.
 - `Tempo API.postman_environment.json`: entorno local con `baseUrl` y variables para los IDs.
 
-En Postman, importa ambos archivos y selecciona el environment **Tempo Local**. Inicia la aplicación y ejecuta las carpetas en el orden mostrado. Cada request `Create` guarda automáticamente el ID de su respuesta para que las operaciones `Get`, `Update` y las relaciones posteriores lo reutilicen.
+En Postman, importa la colección y, opcionalmente, el environment **Tempo Local** si necesitas cambiar `baseUrl`. Inicia la aplicación y ejecuta las carpetas en el orden mostrado. Cada request `Create` guarda automáticamente el ID de su respuesta como variable de colección (`userId`, `statusId`, `categoryId`, `labelId`, `projectId` o `taskId`) para que las operaciones `Get`, `Update` y las relaciones posteriores lo reutilicen. No es necesario crear estas variables manualmente ni seleccionar un environment.
 
 La carpeta **Delete operations** se ejecuta manualmente al final. Tasks, Projects, Categories y Labels usan soft delete. La eliminación de un estado o usuario puede devolver `409 Conflict` si conserva relaciones con registros eliminados lógicamente; este comportamiento protege la integridad referencial existente.
 
