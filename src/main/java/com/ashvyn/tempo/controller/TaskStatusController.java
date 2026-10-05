@@ -16,6 +16,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/task-statuses")
 @Tag(name = "Task Statuses", description = "Global and user task status endpoints")
+/** Exposes configurable global and user-owned task statuses. */
 public class TaskStatusController {
 
     private final TaskStatusService taskStatusService;
@@ -24,6 +25,7 @@ public class TaskStatusController {
         this.taskStatusService = taskStatusService;
     }
 
+    /** Creates a task status and assigns its display position. */
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create task status")
@@ -31,12 +33,14 @@ public class TaskStatusController {
         return taskStatusService.create(request);
     }
 
+    /** Returns a task status by identifier. */
     @GetMapping("/{id}")
     @Operation(summary = "Get task status")
     public TaskStatusResponse get(@PathVariable UUID id) {
         return taskStatusService.get(id);
     }
 
+    /** Lists statuses ordered by position and optionally filtered by scope. */
     @GetMapping
     @Operation(summary = "List task statuses")
     public List<TaskStatusResponse> list(@RequestParam(required = false) UUID ownerId,
@@ -44,12 +48,14 @@ public class TaskStatusController {
         return taskStatusService.list(ownerId, global);
     }
 
+    /** Updates the editable status properties. */
     @PutMapping("/{id}")
     @Operation(summary = "Update task status")
     public TaskStatusResponse update(@PathVariable UUID id, @Valid @RequestBody UpdateTaskStatusRequest request) {
         return taskStatusService.update(id, request);
     }
 
+    /** Deletes a status; referenced statuses produce a conflict response. */
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Delete task status")

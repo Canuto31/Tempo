@@ -16,6 +16,7 @@ import java.util.UUID;
 import java.util.stream.Stream;
 
 @Service
+/** Implements task lifecycle operations and core Sprint 1 task rules. */
 public class TaskService {
 
     private final TaskRepository taskRepository;
@@ -33,6 +34,7 @@ public class TaskService {
         this.taskStatusService = taskStatusService;
     }
 
+    /** Creates a task after validating its exclusive personal/project context. */
     @Transactional
     public TaskResponse create(CreateTaskRequest request) {
         validateContext(request.personalOwnerId(), request.projectId());
@@ -46,11 +48,13 @@ public class TaskService {
         return toResponse(taskRepository.save(task));
     }
 
+    /** Retrieves an active task and maps its relationships to identifiers. */
     @Transactional(readOnly = true)
     public TaskResponse get(UUID id) {
         return toResponse(requireActive(id));
     }
 
+    /** Lists active tasks using no filter or one simple relationship filter. */
     @Transactional(readOnly = true)
     public List<TaskResponse> list(UUID personalOwnerId, UUID projectId, UUID responsibleUserId, UUID parentTaskId) {
         long filterCount = Stream.of(personalOwnerId, projectId, responsibleUserId, parentTaskId)
@@ -66,6 +70,7 @@ public class TaskService {
         return tasks.stream().map(this::toResponse).toList();
     }
 
+    /** Replaces editable task data while preventing self-parenting. */
     @Transactional
     public TaskResponse update(UUID id, UpdateTaskRequest request) {
         validateContext(request.personalOwnerId(), request.projectId());
@@ -80,6 +85,7 @@ public class TaskService {
         return toResponse(taskRepository.save(task));
     }
 
+    /** Soft-deletes a task by setting its deletion and update timestamps. */
     @Transactional
     public void delete(UUID id) {
         Task task = requireActive(id);
@@ -88,6 +94,7 @@ public class TaskService {
         taskRepository.save(task);
     }
 
+    /** Resolves an active task and hides soft-deleted rows from normal operations. */
     public Task requireActive(UUID id) {
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Task not found: " + id));
@@ -97,6 +104,7 @@ public class TaskService {
         return task;
     }
 
+    /** Resolves request identifiers and applies scalar and relationship fields. */
     private void apply(Task task, String title, String description, String notes, UUID personalOwnerId,
                        UUID projectId, UUID responsibleUserId, UUID parentTaskId, UUID categoryId, UUID statusId,
                        java.time.LocalDate deadline, Long estimatedTimeSeconds, Integer pokerPoints) {
@@ -114,12 +122,14 @@ public class TaskService {
         task.setPokerPoints(pokerPoints);
     }
 
+    /** Enforces that exactly one of personalOwnerId and projectId is present. */
     private void validateContext(UUID personalOwnerId, UUID projectId) {
         if ((personalOwnerId == null) == (projectId == null)) {
             throw new BusinessRuleException("Task must belong to exactly one context: personal owner or project");
         }
     }
 
+    /** Produces a stable REST representation without serializing JPA relationships. */
     private TaskResponse toResponse(Task task) {
         return new TaskResponse(task.getId(), task.getTitle(), task.getDescription(), task.getNotes(),
                 task.getPersonalOwner() == null ? null : task.getPersonalOwner().getId(),

@@ -16,6 +16,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/labels")
 @Tag(name = "Labels", description = "Global and user label endpoints")
+/** Exposes active global and user-owned labels. */
 public class LabelController {
 
     private final LabelService labelService;
@@ -24,6 +25,7 @@ public class LabelController {
         this.labelService = labelService;
     }
 
+    /** Creates a global label when ownerId is absent, otherwise a user label. */
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create label")
@@ -31,12 +33,14 @@ public class LabelController {
         return labelService.create(request);
     }
 
+    /** Returns an active label by identifier. */
     @GetMapping("/{id}")
     @Operation(summary = "Get active label")
     public LabelResponse get(@PathVariable UUID id) {
         return labelService.get(id);
     }
 
+    /** Lists all active labels or filters them by owner/global scope. */
     @GetMapping
     @Operation(summary = "List active labels")
     public List<LabelResponse> list(@RequestParam(required = false) UUID ownerId,
@@ -44,12 +48,14 @@ public class LabelController {
         return labelService.list(ownerId, global);
     }
 
+    /** Updates the name of an active label. */
     @PutMapping("/{id}")
     @Operation(summary = "Update label")
     public LabelResponse update(@PathVariable UUID id, @Valid @RequestBody UpdateLabelRequest request) {
         return labelService.update(id, request);
     }
 
+    /** Marks a label as deleted without removing its row. */
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Soft delete label")

@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
+/** Manages global and user-owned labels with soft-delete semantics. */
 public class LabelService {
 
     private final LabelRepository labelRepository;
@@ -24,6 +25,7 @@ public class LabelService {
         this.userService = userService;
     }
 
+    /** Creates a global label or resolves its user owner when provided. */
     @Transactional
     public LabelResponse create(CreateLabelRequest request) {
         Instant now = Instant.now();
@@ -35,11 +37,13 @@ public class LabelService {
         return toResponse(labelRepository.save(label));
     }
 
+    /** Returns an active label by identifier. */
     @Transactional(readOnly = true)
     public LabelResponse get(UUID id) {
         return toResponse(requireActive(id));
     }
 
+    /** Lists active labels for all scopes, one owner, or the global scope. */
     @Transactional(readOnly = true)
     public List<LabelResponse> list(UUID ownerId, boolean global) {
         List<Label> labels = global ? labelRepository.findByOwnerIsNullAndDeletedAtIsNull()
@@ -48,6 +52,7 @@ public class LabelService {
         return labels.stream().map(this::toResponse).toList();
     }
 
+    /** Changes the label name and refreshes its update timestamp. */
     @Transactional
     public LabelResponse update(UUID id, UpdateLabelRequest request) {
         Label label = requireActive(id);
@@ -56,6 +61,7 @@ public class LabelService {
         return toResponse(labelRepository.save(label));
     }
 
+    /** Soft-deletes the label while preserving its database row. */
     @Transactional
     public void delete(UUID id) {
         Label label = requireActive(id);
@@ -64,6 +70,7 @@ public class LabelService {
         labelRepository.save(label);
     }
 
+    /** Resolves an active label for other domain operations. */
     public Label requireActive(UUID id) {
         Label label = labelRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Label not found: " + id));
@@ -73,6 +80,7 @@ public class LabelService {
         return label;
     }
 
+    /** Converts owner relationships into a nullable owner identifier. */
     private LabelResponse toResponse(Label label) {
         return new LabelResponse(label.getId(), label.getOwner() == null ? null : label.getOwner().getId(),
                 label.getName(), label.getCreatedAt(), label.getUpdatedAt());

@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
+/** Manages configurable task statuses and their display order. */
 public class TaskStatusService {
 
     private final TaskStatusRepository taskStatusRepository;
@@ -24,6 +25,7 @@ public class TaskStatusService {
         this.userService = userService;
     }
 
+    /** Creates a global or user-owned status with its initial position. */
     @Transactional
     public TaskStatusResponse create(CreateTaskStatusRequest request) {
         Instant now = Instant.now();
@@ -37,11 +39,13 @@ public class TaskStatusService {
         return toResponse(taskStatusRepository.save(status));
     }
 
+    /** Retrieves a task status by identifier. */
     @Transactional(readOnly = true)
     public TaskStatusResponse get(UUID id) {
         return toResponse(requireStatus(id));
     }
 
+    /** Lists statuses ordered by position and optionally filtered by scope. */
     @Transactional(readOnly = true)
     public List<TaskStatusResponse> list(UUID ownerId, boolean global) {
         List<TaskStatus> statuses = global ? taskStatusRepository.findByOwnerIsNullOrderByPosition()
@@ -50,6 +54,7 @@ public class TaskStatusService {
         return statuses.stream().map(this::toResponse).toList();
     }
 
+    /** Updates status metadata and its modification timestamp. */
     @Transactional
     public TaskStatusResponse update(UUID id, UpdateTaskStatusRequest request) {
         TaskStatus status = requireStatus(id);
@@ -60,16 +65,19 @@ public class TaskStatusService {
         return toResponse(taskStatusRepository.save(status));
     }
 
+    /** Deletes an unreferenced status from persistence. */
     @Transactional
     public void delete(UUID id) {
         taskStatusRepository.delete(requireStatus(id));
     }
 
+    /** Resolves a status entity for assignment to a task. */
     public TaskStatus requireStatus(UUID id) {
         return taskStatusRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Task status not found: " + id));
     }
 
+    /** Maps a status and its optional owner to the API response. */
     private TaskStatusResponse toResponse(TaskStatus status) {
         return new TaskStatusResponse(status.getId(), status.getOwner() == null ? null : status.getOwner().getId(),
                 status.getName(), status.getPosition(), status.isDefaultStatus(), status.getCreatedAt(),

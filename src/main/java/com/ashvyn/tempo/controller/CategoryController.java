@@ -16,6 +16,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/categories")
 @Tag(name = "Categories", description = "Global and user category endpoints")
+/** Exposes active global and user-owned categories. */
 public class CategoryController {
 
     private final CategoryService categoryService;
@@ -24,6 +25,7 @@ public class CategoryController {
         this.categoryService = categoryService;
     }
 
+    /** Creates a global category when ownerId is absent, otherwise a user category. */
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create category")
@@ -31,12 +33,14 @@ public class CategoryController {
         return categoryService.create(request);
     }
 
+    /** Returns an active category by identifier. */
     @GetMapping("/{id}")
     @Operation(summary = "Get active category")
     public CategoryResponse get(@PathVariable UUID id) {
         return categoryService.get(id);
     }
 
+    /** Lists all active categories or filters them by owner/global scope. */
     @GetMapping
     @Operation(summary = "List active categories")
     public List<CategoryResponse> list(@RequestParam(required = false) UUID ownerId,
@@ -44,12 +48,14 @@ public class CategoryController {
         return categoryService.list(ownerId, global);
     }
 
+    /** Updates the name of an active category. */
     @PutMapping("/{id}")
     @Operation(summary = "Update category")
     public CategoryResponse update(@PathVariable UUID id, @Valid @RequestBody UpdateCategoryRequest request) {
         return categoryService.update(id, request);
     }
 
+    /** Marks a category as deleted without removing its row. */
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Soft delete category")

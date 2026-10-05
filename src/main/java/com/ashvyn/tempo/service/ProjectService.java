@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
+/** Implements project lifecycle rules, ownership checks and soft deletion. */
 public class ProjectService {
 
     private final ProjectRepository projectRepository;
@@ -25,6 +26,7 @@ public class ProjectService {
         this.userService = userService;
     }
 
+    /** Creates a project after resolving its owner and optional parent. */
     @Transactional
     public ProjectResponse create(CreateProjectRequest request) {
         Instant now = Instant.now();
@@ -39,11 +41,13 @@ public class ProjectService {
         return toResponse(projectRepository.save(project));
     }
 
+    /** Returns an active project or raises a not-found error. */
     @Transactional(readOnly = true)
     public ProjectResponse get(UUID id) {
         return toResponse(requireActive(id));
     }
 
+    /** Lists active projects, optionally restricted to an owner. */
     @Transactional(readOnly = true)
     public List<ProjectResponse> list(UUID ownerId) {
         List<Project> projects = ownerId == null
@@ -52,6 +56,7 @@ public class ProjectService {
         return projects.stream().map(this::toResponse).toList();
     }
 
+    /** Updates project data and validates the parent relationship. */
     @Transactional
     public ProjectResponse update(UUID id, UpdateProjectRequest request) {
         Project project = requireActive(id);
@@ -63,6 +68,7 @@ public class ProjectService {
         return toResponse(projectRepository.save(project));
     }
 
+    /** Soft-deletes a project by recording the deletion timestamp. */
     @Transactional
     public void delete(UUID id) {
         Project project = requireActive(id);
@@ -71,6 +77,7 @@ public class ProjectService {
         projectRepository.save(project);
     }
 
+    /** Resolves a project and treats soft-deleted rows as nonexistent. */
     public Project requireActive(UUID id) {
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found: " + id));
@@ -80,6 +87,7 @@ public class ProjectService {
         return project;
     }
 
+    /** Validates that the parent is active, different, and owned by the same user. */
     private Project resolveParent(UUID parentId, UUID ownerId, UUID projectId) {
         if (parentId == null) {
             return null;
@@ -94,6 +102,7 @@ public class ProjectService {
         return parent;
     }
 
+    /** Flattens project relationships into identifiers for the REST response. */
     private ProjectResponse toResponse(Project project) {
         return new ProjectResponse(project.getId(), project.getOwner().getId(),
                 project.getParentProject() == null ? null : project.getParentProject().getId(),
