@@ -8,6 +8,8 @@ import java.util.UUID;
 
 public interface CategoryRepository extends JpaRepository<Category, UUID> {
 
+    List<Category> findByDeletedAtIsNull();
+
     List<Category> findByOwnerIdAndDeletedAtIsNull(UUID ownerId);
 
     List<Category> findByOwnerIsNullAndDeletedAtIsNull();

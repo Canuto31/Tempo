@@ -8,6 +8,8 @@ import java.util.UUID;
 
 public interface LabelRepository extends JpaRepository<Label, UUID> {
 
+    List<Label> findByDeletedAtIsNull();
+
     List<Label> findByOwnerIdAndDeletedAtIsNull(UUID ownerId);
 
     List<Label> findByOwnerIsNullAndDeletedAtIsNull();

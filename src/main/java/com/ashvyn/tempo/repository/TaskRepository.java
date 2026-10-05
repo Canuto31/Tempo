@@ -8,6 +8,8 @@ import java.util.UUID;
 
 public interface TaskRepository extends JpaRepository<Task, UUID> {
 
+    List<Task> findByDeletedAtIsNull();
+
     List<Task> findByPersonalOwnerIdAndDeletedAtIsNull(UUID userId);
 
     List<Task> findByProjectIdAndDeletedAtIsNull(UUID projectId);

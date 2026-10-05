@@ -8,6 +8,8 @@ import java.util.UUID;
 
 public interface TaskStatusRepository extends JpaRepository<TaskStatus, UUID> {
 
+    List<TaskStatus> findAllByOrderByPosition();
+
     List<TaskStatus> findByOwnerIdOrderByPosition(UUID ownerId);
 
     List<TaskStatus> findByOwnerIsNullOrderByPosition();
