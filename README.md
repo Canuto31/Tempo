@@ -84,6 +84,31 @@ http://localhost:8080/tempo/api
 .\gradlew.bat test
 ```
 
+## Datos iniciales de desarrollo
+
+El perfil `dev` incluye un inicializador en `config/DevDataInitializer.java`. Cuando la tabla de usuarios está vacía, al arrancar la aplicación crea automáticamente un conjunto relacionado de datos para probar la API:
+
+- 2 usuarios: Ana Torres y Mateo Ruiz
+- 2 proyectos: Tempo MVP y REST API
+- 3 tareas personales/de proyecto, incluida una subtarea
+- 3 categorías globales/de usuario
+- 3 labels globales/de usuario
+- 4 estados globales/de usuario
+- relaciones entre tareas y labels
+
+El proceso es seguro para una base que ya contiene usuarios: en ese caso no inserta ni modifica información. Para deshabilitarlo incluso en una base vacía, cambia la propiedad:
+
+```properties
+tempo.seed.enabled=false
+```
+
+El inicializador solo está activo con el perfil `dev`; los tests deshabilitan explícitamente la carga para no contaminar la base durante el build. Las credenciales incluidas son únicamente demostrativas y no deben utilizarse fuera del entorno local:
+
+```text
+ana@tempo.local / tempo-demo
+mateo@tempo.local / tempo-demo
+```
+
 ## Documentación interactiva
 
 Con la aplicación iniciada:
