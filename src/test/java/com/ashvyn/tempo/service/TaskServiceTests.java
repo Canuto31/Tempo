@@ -2,6 +2,8 @@ package com.ashvyn.tempo.service;
 
 import com.ashvyn.tempo.dto.task.CreateTaskRequest;
 import com.ashvyn.tempo.entity.Task;
+import com.ashvyn.tempo.entity.TaskStatus;
+import com.ashvyn.tempo.entity.User;
 import com.ashvyn.tempo.exception.BusinessRuleException;
 import com.ashvyn.tempo.exception.ResourceNotFoundException;
 import com.ashvyn.tempo.repository.TaskRepository;
@@ -12,6 +14,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -88,8 +91,54 @@ class TaskServiceTests {
         verify(taskRepository).save(task);
     }
 
+    @Test
+    void completingTheLastPendingChildCompletesItsParent() {
+        Task parent = taskWithRequiredRelationships(UUID.randomUUID());
+        Task child = taskWithRequiredRelationships(UUID.randomUUID());
+        child.setParentTask(parent);
+        when(taskRepository.findById(child.getId())).thenReturn(Optional.of(child));
+        when(taskRepository.save(child)).thenReturn(child);
+        when(taskRepository.findByParentTaskIdAndDeletedAtIsNull(parent.getId())).thenReturn(List.of(child));
+
+        taskService.updateCompletion(child.getId(), true);
+
+        assertThat(child.getCompletedAt()).isNotNull();
+        assertThat(parent.getCompletedAt()).isNotNull();
+        verify(taskRepository).save(parent);
+    }
+
+    @Test
+    void reopeningAChildReopensItsCompletedParent() {
+        Task parent = taskWithRequiredRelationships(UUID.randomUUID());
+        parent.setCompletedAt(java.time.Instant.now());
+        Task child = taskWithRequiredRelationships(UUID.randomUUID());
+        child.setCompletedAt(java.time.Instant.now());
+        child.setParentTask(parent);
+        when(taskRepository.findById(child.getId())).thenReturn(Optional.of(child));
+        when(taskRepository.save(child)).thenReturn(child);
+        when(taskRepository.findByParentTaskIdAndDeletedAtIsNull(parent.getId())).thenReturn(List.of(child));
+
+        taskService.updateCompletion(child.getId(), false);
+
+        assertThat(child.getCompletedAt()).isNull();
+        assertThat(parent.getCompletedAt()).isNull();
+        verify(taskRepository).save(parent);
+    }
+
     private CreateTaskRequest request(UUID personalOwnerId, UUID projectId) {
         return new CreateTaskRequest("Task", null, null, personalOwnerId, projectId, UUID.randomUUID(), null,
                 null, UUID.randomUUID(), null, 0L, 0);
+    }
+
+    private Task taskWithRequiredRelationships(UUID id) {
+        User responsible = new User();
+        responsible.setId(UUID.randomUUID());
+        TaskStatus status = new TaskStatus();
+        status.setId(UUID.randomUUID());
+        Task task = new Task();
+        task.setId(id);
+        task.setResponsibleUser(responsible);
+        task.setStatus(status);
+        return task;
     }
 }

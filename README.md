@@ -153,6 +153,7 @@ http://localhost:8080/tempo/api/api/v1/tasks
 | GET | `/api/v1/tasks` | Listar tareas activas con un filtro opcional |
 | GET | `/api/v1/tasks/{id}` | Consultar tarea activa |
 | PUT | `/api/v1/tasks/{id}` | Actualizar tarea |
+| PATCH | `/api/v1/tasks/{id}/completion` | Marcar una tarea como completada o reabrirla |
 | DELETE | `/api/v1/tasks/{id}` | Eliminar tarea lógicamente |
 | POST | `/api/v1/categories` | Crear categoría global o de usuario |
 | GET | `/api/v1/categories` | Listar categorías activas |
@@ -184,6 +185,11 @@ Para Tasks solo se admite un filtro por solicitud. Esta limitación mantiene las
 - Una tarea pertenece exactamente a un contexto: usuario personal o proyecto, nunca a ambos ni a ninguno.
 - Toda tarea tiene un usuario responsable y un estado.
 - Una tarea no puede ser su propia tarea padre.
+- Una subtarea se crea asignando el UUID de su tarea padre en `parentTaskId`.
+- El endpoint de completion recibe `{ "completed": true }` para marcar el checkbox o `{ "completed": false }` para reabrirlo.
+- Una tarea padre se completa automáticamente cuando todas sus subtareas activas están completadas.
+- Si una subtarea se reabre, su tarea padre también se reabre; la actualización se propaga por toda la jerarquía.
+- Crear, mover o eliminar lógicamente una subtarea recalcula automáticamente el estado de sus tareas padre.
 - Un proyecto no puede ser su propio padre y el proyecto padre debe pertenecer al mismo usuario.
 - Tasks, Projects, Categories y Labels usan eliminación lógica mediante `deletedAt`.
 - Los recursos eliminados lógicamente no aparecen en consultas normales.

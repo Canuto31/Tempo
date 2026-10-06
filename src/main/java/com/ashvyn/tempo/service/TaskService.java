@@ -12,6 +12,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -45,7 +47,9 @@ public class TaskService {
                 request.statusId(), request.deadline(), request.estimatedTimeSeconds(), request.pokerPoints());
         task.setCreatedAt(now);
         task.setUpdatedAt(now);
-        return toResponse(taskRepository.save(task));
+        Task savedTask = taskRepository.save(task);
+        synchronizeAncestors(savedTask.getParentTask(), now);
+        return toResponse(savedTask);
     }
 
     /** Retrieves an active task and maps its relationships to identifiers. */
@@ -75,23 +79,44 @@ public class TaskService {
     public TaskResponse update(UUID id, UpdateTaskRequest request) {
         validateContext(request.personalOwnerId(), request.projectId());
         Task task = requireActive(id);
-        if (id.equals(request.parentTaskId())) {
-            throw new BusinessRuleException("A task cannot be its own parent");
-        }
+        Task previousParent = task.getParentTask();
+        validateParentHierarchy(id, request.parentTaskId());
         apply(task, request.title(), request.description(), request.notes(), request.personalOwnerId(),
                 request.projectId(), request.responsibleUserId(), request.parentTaskId(), request.categoryId(),
                 request.statusId(), request.deadline(), request.estimatedTimeSeconds(), request.pokerPoints());
         task.setUpdatedAt(Instant.now());
-        return toResponse(taskRepository.save(task));
+        Task savedTask = taskRepository.save(task);
+        synchronizeAncestors(previousParent, savedTask.getUpdatedAt());
+        if (savedTask.getParentTask() != previousParent) {
+            synchronizeAncestors(savedTask.getParentTask(), savedTask.getUpdatedAt());
+        }
+        return toResponse(savedTask);
+    }
+
+    /**
+     * Completes or reopens a task and recalculates every ancestor. A parent is
+     * complete only when it has active children and all of them are complete.
+     */
+    @Transactional
+    public TaskResponse updateCompletion(UUID id, boolean completed) {
+        Task task = requireActive(id);
+        Instant now = Instant.now();
+        task.setCompletedAt(completed ? now : null);
+        task.setUpdatedAt(now);
+        Task savedTask = taskRepository.save(task);
+        synchronizeAncestors(savedTask.getParentTask(), now);
+        return toResponse(savedTask);
     }
 
     /** Soft-deletes a task by setting its deletion and update timestamps. */
     @Transactional
     public void delete(UUID id) {
         Task task = requireActive(id);
+        Task parent = task.getParentTask();
         task.setDeletedAt(Instant.now());
         task.setUpdatedAt(Instant.now());
         taskRepository.save(task);
+        synchronizeAncestors(parent, task.getUpdatedAt());
     }
 
     /** Resolves an active task and hides soft-deleted rows from normal operations. */
@@ -129,6 +154,42 @@ public class TaskService {
         }
     }
 
+    /** Prevents direct or indirect cycles before changing a task parent. */
+    private void validateParentHierarchy(UUID taskId, UUID parentTaskId) {
+        if (parentTaskId == null) {
+            return;
+        }
+        Set<UUID> visited = new HashSet<>();
+        Task current = requireActive(parentTaskId);
+        while (current != null && visited.add(current.getId())) {
+            if (taskId.equals(current.getId())) {
+                throw new BusinessRuleException("A task cannot be its own ancestor");
+            }
+            current = current.getParentTask();
+        }
+        if (current != null) {
+            throw new BusinessRuleException("Task hierarchy contains a cycle");
+        }
+    }
+
+    /** Recalculates completion from the direct active children and propagates it to the root. */
+    private void synchronizeAncestors(Task parent, Instant now) {
+        Task current = parent;
+        Set<UUID> visited = new HashSet<>();
+        while (current != null && visited.add(current.getId())) {
+            List<Task> children = taskRepository.findByParentTaskIdAndDeletedAtIsNull(current.getId());
+            boolean shouldBeCompleted = !children.isEmpty()
+                    && children.stream().allMatch(child -> child.getCompletedAt() != null);
+            boolean isCompleted = current.getCompletedAt() != null;
+            if (shouldBeCompleted != isCompleted) {
+                current.setCompletedAt(shouldBeCompleted ? now : null);
+                current.setUpdatedAt(now);
+                taskRepository.save(current);
+            }
+            current = current.getParentTask();
+        }
+    }
+
     /** Produces a stable REST representation without serializing JPA relationships. */
     private TaskResponse toResponse(Task task) {
         return new TaskResponse(task.getId(), task.getTitle(), task.getDescription(), task.getNotes(),
@@ -137,6 +198,6 @@ public class TaskService {
                 task.getParentTask() == null ? null : task.getParentTask().getId(),
                 task.getCategory() == null ? null : task.getCategory().getId(), task.getStatus().getId(),
                 task.getDeadline(), task.getEstimatedTimeSeconds(), task.getPokerPoints(), task.getCreatedAt(),
-                task.getCompletedAt(), task.getUpdatedAt());
+                task.getCompletedAt() != null, task.getCompletedAt(), task.getUpdatedAt());
     }
 }

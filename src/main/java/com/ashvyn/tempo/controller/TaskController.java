@@ -2,6 +2,7 @@ package com.ashvyn.tempo.controller;
 
 import com.ashvyn.tempo.dto.task.CreateTaskRequest;
 import com.ashvyn.tempo.dto.task.TaskResponse;
+import com.ashvyn.tempo.dto.task.UpdateTaskCompletionRequest;
 import com.ashvyn.tempo.dto.task.UpdateTaskRequest;
 import com.ashvyn.tempo.service.TaskService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -55,6 +56,15 @@ public class TaskController {
     @Operation(summary = "Update task")
     public TaskResponse update(@PathVariable UUID id, @Valid @RequestBody UpdateTaskRequest request) {
         return taskService.update(id, request);
+    }
+
+    /** Updates the task checkbox and propagates completion changes through its ancestors. */
+    @PatchMapping("/{id}/completion")
+    @Operation(summary = "Complete or reopen task",
+            description = "Updates the completion checkbox and automatically recalculates parent tasks")
+    public TaskResponse updateCompletion(@PathVariable UUID id,
+                                         @Valid @RequestBody UpdateTaskCompletionRequest request) {
+        return taskService.updateCompletion(id, request.completed());
     }
 
     /** Marks a task as deleted through its {@code deletedAt} field. */

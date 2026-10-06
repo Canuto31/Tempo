@@ -19,6 +19,7 @@ public record TaskResponse(
         Long estimatedTimeSeconds,
         Integer pokerPoints,
         Instant createdAt,
+        boolean completed,
         Instant completedAt,
         Instant updatedAt
 ) {
